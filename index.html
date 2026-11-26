@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>체크세이프 CheckSafe · 안전관리 체크리스트 Q&amp;A 챗봇</title>
+<style>
+  :root {
+    --blue: #0b5fff;
+    --blue-dark: #0b1c3a;
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --border: #dfe4ee;
+    --text: #1f2328;
+    --muted: #6b7686;
+    --bot-bubble: #eef3ff;
+    --user-bubble: #0b5fff;
+    --danger: #c53030;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  }
+  .app-header {
+    background: linear-gradient(135deg, var(--blue-dark), #142a52);
+    color: #fff;
+    padding: 18px 16px 14px;
+  }
+  .app-header .title-row {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  }
+  .app-header h1 { margin: 0; font-size: 20px; }
+  .app-header .en-name { font-size: 12px; color: #9fb4e8; font-weight: 400; }
+  .app-header p { margin: 4px 0 0; font-size: 12.5px; color: #c3d0ec; }
+  .disclaimer {
+    margin: 10px 0 0;
+    background: rgba(255, 196, 0, 0.14);
+    border: 1px solid rgba(255, 196, 0, 0.5);
+    color: #ffe29a;
+    font-size: 11.5px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    line-height: 1.5;
+  }
+
+  .layout {
+    display: flex;
+    flex-direction: column;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .chat-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    min-height: 60vh;
+    overflow: hidden;
+  }
+  .chat-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .bubble-row { display: flex; }
+  .bubble-row.user { justify-content: flex-end; }
+  .bubble-row.bot { justify-content: flex-start; }
+  .bubble {
+    max-width: 86%;
+    padding: 10px 13px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+  .bubble.user { background: var(--user-bubble); color: #fff; border-bottom-right-radius: 4px; }
+  .bubble.bot { background: var(--bot-bubble); color: var(--blue-dark); border-bottom-left-radius: 4px; }
+
+  .checklist-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 8px;
+  }
+  .checklist-card h4 { margin: 0 0 6px; font-size: 13px; color: var(--blue-dark); }
+  .checklist-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 5px 0;
+    font-size: 12.8px;
+    border-bottom: 1px dashed #eef0f4;
+  }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; }
+  .checklist-item .item-text { flex: 1; }
+  .source-tag {
+    display: inline-block; margin-top: 2px; font-size: 10.5px; color: var(--muted);
+  }
+  .save-row {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);
+  }
+  .save-row label { font-size: 11.5px; color: var(--muted); }
+  .save-row input[type="date"], .save-row input[type="text"] {
+    font-size: 12px; padding: 5px 7px; border: 1px solid var(--border); border-radius: 6px;
+    font-family: inherit;
+  }
+  .save-row input[type="text"] { width: 110px; }
+  .save-btn {
+    margin-left: auto;
+    background: var(--blue); color: #fff; border: none; border-radius: 8px;
+    padding: 7px 14px; font-size: 12.5px; cursor: pointer; font-weight: 600;
+  }
+  .save-btn:hover { background: #0947c7; }
+  .save-btn.saved { background: #1f9d55; cursor: default; }
+
+  .input-bar {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 10px; border-top: 1px solid var(--border); background: #fafbfd;
+  }
+  .input-bar select {
+    flex: 0 0 auto;
+    padding: 9px 8px; border-radius: 8px; border: 1px solid var(--border);
+    font-size: 12.5px; background: #fff; font-family: inherit;
+  }
+  .input-bar input[type="text"] {
+    flex: 1 1 160px;
+    padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border);
+    font-size: 13px; font-family: inherit;
+  }
+  .input-bar button {
+    flex: 0 0 auto;
+    background: var(--blue); color: #fff; border: none; border-radius: 8px;
+    padding: 9px 16px; font-size: 13px; cursor: pointer; font-weight: 600;
+  }
+  .input-bar button:hover { background: #0947c7; }
+
+  .history-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .history-panel .history-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .history-panel h2 { font-size: 14px; margin: 0; color: var(--blue-dark); }
+  #toggleHistoryBtn {
+    display: none;
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    padding: 5px 10px; font-size: 11.5px; cursor: pointer; color: var(--blue);
+  }
+  .history-empty { font-size: 12px; color: var(--muted); padding: 10px 0; }
+  .history-item {
+    border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; margin-top: 8px;
+    font-size: 12px;
+  }
+  .history-item .hi-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .history-item .hi-cat { font-weight: 700; color: var(--blue-dark); }
+  .history-item .hi-meta { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .history-item .hi-progress { font-size: 11.5px; margin-top: 4px; color: #1f9d55; font-weight: 600; }
+  .history-item details { margin-top: 6px; }
+  .history-item summary { cursor: pointer; font-size: 11.5px; color: var(--blue); }
+  .history-item ul { margin: 6px 0 0; padding-left: 18px; font-size: 11.5px; }
+  .history-item .hi-del {
+    background: none; border: none; color: var(--danger); font-size: 11px; cursor: pointer; padding: 0;
+  }
+
+  .app-footer {
+    max-width: 1080px; margin: 0 auto; padding: 4px 14px 24px;
+    font-size: 11px; color: var(--muted); line-height: 1.6;
+  }
+
+  @media (min-width: 820px) {
+    .layout { flex-direction: row; align-items: flex-start; }
+    .chat-panel { flex: 2; height: 78vh; }
+    .history-panel { flex: 1; max-height: 78vh; overflow-y: auto; position: sticky; top: 14px; }
+  }
+  @media (max-width: 819px) {
+    #toggleHistoryBtn { display: inline-block; }
+    .history-panel .history-body { display: none; }
+    .history-panel.open .history-body { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="title-row">
+    <h1>체크세이프 <span class="en-name">CheckSafe</span></h1>
+  </div>
+  <p>㈜동호엔지니어링 안전관리 체크리스트 Q&amp;A 챗봇 (프로토타입) · 2026 NI2.0 AID 해커톤 · 1팀 넥스톤(NEXTON)</p>
+  <div class="disclaimer">
+    ⚠️ 이 체크리스트는 고용노동부·KOSHA 공개 자율점검표를 재구성한 <b>샘플 데이터</b>입니다. ㈜동호엔지니어링 고유 자료가 아니므로, 실제 서비스 전 반드시 실제 기업 안전관리 매뉴얼로 교체·검수가 필요합니다. (출처는 각 답변 하단에 표시됩니다)
+  </div>
+</header>
+
+<main class="layout">
+  <section class="chat-panel">
+    <div class="chat-log" id="chatLog"></div>
+    <form class="input-bar" id="inputForm">
+      <select id="categorySelect">
+        <option value="auto">공종 자동 인식(질문으로 판단)</option>
+        <option value="electric">전기공사</option>
+        <option value="mechanical">기계설비공사</option>
+        <option value="fire">소방시설공사</option>
+        <option value="renewable">신재생에너지(태양광·지열)</option>
+        <option value="earthwork">지반조성·포장공사</option>
+        <option value="telecom">정보통신공사</option>
+      </select>
+      <input type="text" id="questionInput" placeholder="예: 전기 작업 전에 뭘 확인해야 하나요?" autocomplete="off">
+      <button type="submit">전송</button>
+    </form>
+  </section>
+
+  <aside class="history-panel" id="historyPanel">
+    <div class="history-header">
+      <h2>점검 이력</h2>
+      <button type="button" id="toggleHistoryBtn">이력 보기</button>
+    </div>
+    <div class="history-body">
+      <div id="historyList"></div>
+    </div>
+  </aside>
+</main>
+
+<footer class="app-footer">
+  기획 근거: project-plan.md (2026-11-26 작성) · 체크리스트 원자료: 고용노동부 「건설업 중대산업재해 예방을 위한 자율점검표」(2022-01-02), 고용노동부 천안지청 「공사별 핵심 위험요인 점검표」(2025-04-16), 안전보건공단(KOSHA) 「건설재해예방 자율점검 자료집」(2019-04-01), 고용노동부 「12대 사망사고 기인물 자율 안전점검표」(2022-06-29) 등 공개 자료. 신재생에너지·정보통신 항목은 전기/고소작업 체크리스트를 준용한 <b>가설</b>이며 실제 동호엔지니어링 자료로 교체 필요.
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- 1) 샘플 데이터 (공종별 안전관리 체크리스트) ----------
+  var CHECKLISTS = {
+    electric: {
+      label: "전기공사",
+      keywords: ["전기", "감전", "배전반", "분전반", "누전"],
+      source: "고용노동부 「건설업 중대산업재해 예방을 위한 자율점검표」, 2022-01-02",
+      items: [
+        "감전위험이 있는 전기 기계·기구 작업 시 작업자의 자격을 확인했는가?",
+        "감전 위험 작업에 절연용 보호구를 지급하고 착용하도록 했는가?",
+        "가공전로에 근접해 비계를 설치할 때 이격 또는 절연용 방호구 조치를 했는가?",
+        "분전반·배전반은 충전부가 노출되지 않는 폐쇄형 구조이며 접지를 실시했는가?",
+        "이동전선의 절연피복 손상 여부와 습윤 장소의 절연효과를 확인했는가?",
+        "휴대형·이동형 전동기계에 누전차단기를 설치하고 작동 여부를 점검했는가?"
+      ]
+    },
+    mechanical: {
+      label: "기계설비공사",
+      keywords: ["기계", "설비", "배관", "용접", "밀폐"],
+      source: "고용노동부 천안지청 「공사별 핵심 위험요인 점검표(기계·설비)」, 2025-04-16",
+      items: [
+        "작업 전 중량물 취급에 대한 계획서를 작성했는가?",
+        "작업 전 기계·기구에 대한 안전점검을 실시했는가?",
+        "작업 중 정리정돈을 실시하고 안전통로를 확보했는가?",
+        "기계·설비 정비 작업 시 시건장치·방호장치를 설치했는가?",
+        "용접·용단 등 화기사용 작업 시 화재예방 조치를 했는가?",
+        "밀폐공간 작업 시 작업 전 산소농도를 측정하고 환기했는가?"
+      ]
+    },
+    fire: {
+      label: "소방시설공사",
+      keywords: ["소방", "스프링클러", "화재", "화기"],
+      source: "고용노동부 서울동부지청 「자율점검 자료집」 화재·폭발 예방 섹션, 2021-06-07 (일반 소방공사 안전수칙 참고, 동호엔지니어링 전용 자료 확인 필요)",
+      items: [
+        "화기작업(용접·용단) 전 주변 가연물을 제거하고 소화기를 비치했는가?",
+        "소방배관 설치를 위한 고소작업대·비계에 안전난간을 설치했는가?",
+        "화기작업 시 화재감시자를 배치했는가?",
+        "전기배선 작업 구간에 누전차단기 및 접지를 확인했는가?",
+        "작업 종료 후 잔존 화재 위험요소를 재점검했는가?"
+      ]
+    },
+    renewable: {
+      label: "신재생에너지(태양광·지열)",
+      keywords: ["태양광", "지열", "신재생", "인버터", "열펌프"],
+      source: "가설: 고용노동부 자율점검표의 전기공사·고소작업 항목을 신재생에너지 현장에 준용 (동호엔지니어링 전용 체크리스트는 확인되지 않음)",
+      items: [
+        "지붕 태양광 패널 고소작업 시 안전대 부착설비 및 추락방지 조치를 했는가?",
+        "태양광 인버터·배선 작업 시 감전 방지 절연조치를 했는가?",
+        "지열시스템 굴착·천공 작업 전 지반 상태 및 매설물을 확인했는가?",
+        "인버터·열펌프 등 중량물 운반 시 안전한 양중방법을 준수했는가?"
+      ]
+    },
+    earthwork: {
+      label: "지반조성·포장공사",
+      keywords: ["굴착", "지반", "포장", "흙막이", "토사"],
+      source: "안전보건공단(KOSHA) 「건설재해예방 자율점검 자료집」, 2019-04-01 / 고용노동부 「12대 사망사고 기인물 자율 안전점검표」, 2022-06-29",
+      items: [
+        "굴착 작업 전 지반 상태·매설물·지하수위를 확인했는가?",
+        "토사 붕괴 위험이 있을 때 흙막이 지보공을 설치했는가?",
+        "차량계 건설기계(굴삭기 등) 작업 시 유도자를 배치하고 전도 방지 조치를 했는가?",
+        "개구부·단부에 추락 방지(안전난간, 덮개)를 설치했는가?",
+        "포장 장비(롤러 등) 작업 시 신호수를 배치하고 접근을 통제했는가?"
+      ]
+    },
+    telecom: {
+      label: "정보통신공사",
+      keywords: ["통신", "케이블", "배선", "광케이블"],
+      source: "가설: 전기공사 체크리스트 항목을 준용 (정보통신공사 전용 공개자료는 확인되지 않음, 확인 필요)",
+      items: [
+        "통신선로 가설·철거 시 고소작업대·사다리 안전조치를 했는가?",
+        "기존 전력선과의 이격거리를 확보했는가?",
+        "케이블 포설 시 통로 정리정돈 및 걸림 방지 조치를 했는가?"
+      ]
+    }
+  };
+
+  var CATEGORY_ORDER = ["electric", "mechanical", "fire", "renewable", "earthwork", "telecom"];
+
+  // ---------- 2) 상태 ----------
+  var chatLog = document.getElementById("chatLog");
+  var historyList = document.getElementById("historyList");
+  var inputForm = document.getElementById("inputForm");
+  var categorySelect = document.getElementById("categorySelect");
+  var questionInput = document.getElementById("questionInput");
+  var historyPanel = document.getElementById("historyPanel");
+  var toggleHistoryBtn = document.getElementById("toggleHistoryBtn");
+
+  var HISTORY_KEY = "checksafe_history_v1";
+  var msgCounter = 0;
+
+  function todayStr() {
+    var d = new Date();
+    var mm = String(d.getMonth() + 1).padStart(2, "0");
+    var dd = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + mm + "-" + dd;
+  }
+
+  var memoryHistory = null; // in-memory fallback if localStorage is unavailable (e.g. sandboxed/opaque origins)
+
+  function loadHistory() {
+    if (memoryHistory !== null) return memoryHistory;
+    try {
+      memoryHistory = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+    } catch (e) {
+      memoryHistory = [];
+    }
+    return memoryHistory;
+  }
+  function saveHistoryToStorage(list) {
+    memoryHistory = list;
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    } catch (e) {
+      // localStorage blocked (e.g. opaque origin) - keep working in-memory for this session
+      console.warn("localStorage 저장 실패, 이번 세션 동안만 메모리에 보관합니다.", e);
+    }
+  }
+
+  // ---------- 3) 채팅 렌더링 ----------
+  function addUserBubble(text) {
+    var row = document.createElement("div");
+    row.className = "bubble-row user";
+    var b = document.createElement("div");
+    b.className = "bubble user";
+    b.textContent = text;
+    row.appendChild(b);
+    chatLog.appendChild(row);
+    scrollChatToBottom();
+  }
+
+  function addBotGreeting() {
+    var row = document.createElement("div");
+    row.className = "bubble-row bot";
+    var b = document.createElement("div");
+    b.className = "bubble bot";
+    b.innerHTML = "안녕하세요! 체크세이프입니다. 👷\n" +
+      "위에서 <b>공종</b>을 선택하거나, 아래 입력창에 \"전기 작업 전에 뭘 확인해야 하나요?\" 처럼 질문해 주세요.\n" +
+      "해당 공종의 안전점검 체크리스트와 근거 출처를 바로 보여드릴게요.";
+    row.appendChild(b);
+    chatLog.appendChild(row);
+  }
+
+  function addBotUnknown() {
+    var row = document.createElement("div");
+    row.className = "bubble-row bot";
+    var b = document.createElement("div");
+    b.className = "bubble bot";
+    var list = CATEGORY_ORDER.map(function (k) { return "· " + CHECKLISTS[k].label; }).join("\n");
+    b.innerHTML = "질문에서 공종을 정확히 파악하지 못했어요. 위 드롭다운에서 공종을 직접 선택해 주시거나, 아래 공종 이름을 포함해 다시 질문해 주세요.\n" + list;
+    row.appendChild(b);
+    chatLog.appendChild(row);
+    scrollChatToBottom();
+  }
+
+  function addBotChecklist(categoryKey) {
+    var cat = CHECKLISTS[categoryKey];
+    msgCounter += 1;
+    var msgId = "msg" + msgCounter;
+
+    var row = document.createElement("div");
+    row.className = "bubble-row bot";
+    var b = document.createElement("div");
+    b.className = "bubble bot";
+
+    var intro = document.createElement("div");
+    intro.textContent = "[" + cat.label + "] 작업 전 안전점검 체크리스트입니다. 해당되는 항목을 체크한 뒤 저장해 보세요.";
+    b.appendChild(intro);
+
+    var card = document.createElement("div");
+    card.className = "checklist-card";
+    var h4 = document.createElement("h4");
+    h4.textContent = cat.label + " 체크리스트 (" + cat.items.length + "개 항목)";
+    card.appendChild(h4);
+
+    cat.items.forEach(function (text, idx) {
+      var itemRow = document.createElement("label");
+      itemRow.className = "checklist-item";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = msgId + "_item" + idx;
+      cb.dataset.itemIndex = idx;
+      var span = document.createElement("span");
+      span.className = "item-text";
+      span.textContent = text;
+      itemRow.appendChild(cb);
+      itemRow.appendChild(span);
+      card.appendChild(itemRow);
+    });
+
+    var sourceTag = document.createElement("div");
+    sourceTag.className = "source-tag";
+    sourceTag.textContent = "출처: " + cat.source;
+    card.appendChild(sourceTag);
+
+    var saveRow = document.createElement("div");
+    saveRow.className = "save-row";
+    saveRow.innerHTML =
+      '<label>점검일자</label>' +
+      '<input type="date" id="' + msgId + '_date" value="' + todayStr() + '">' +
+      '<label>점검자(선택)</label>' +
+      '<input type="text" id="' + msgId + '_inspector" placeholder="이름">' +
+      '<button type="button" class="save-btn" id="' + msgId + '_savebtn">점검 완료 저장</button>';
+    card.appendChild(saveRow);
+
+    b.appendChild(card);
+    row.appendChild(b);
+    chatLog.appendChild(row);
+    scrollChatToBottom();
+
+    document.getElementById(msgId + "_savebtn").addEventListener("click", function () {
+      handleSave(msgId, categoryKey);
+    });
+  }
+
+  function scrollChatToBottom() {
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  // ---------- 4) 공종 자동 인식 ----------
+  function matchCategory(text) {
+    var lower = text;
+    for (var i = 0; i < CATEGORY_ORDER.length; i++) {
+      var key = CATEGORY_ORDER[i];
+      var kws = CHECKLISTS[key].keywords;
+      for (var j = 0; j < kws.length; j++) {
+        if (lower.indexOf(kws[j]) !== -1) return key;
+      }
+    }
+    return null;
+  }
+
+  // ---------- 5) 저장 / 이력 ----------
+  function handleSave(msgId, categoryKey) {
+    var cat = CHECKLISTS[categoryKey];
+    var checkedTexts = [];
+    cat.items.forEach(function (text, idx) {
+      var cb = document.getElementById(msgId + "_item" + idx);
+      if (cb && cb.checked) checkedTexts.push(text);
+    });
+    var date = document.getElementById(msgId + "_date").value || todayStr();
+    var inspector = document.getElementById(msgId + "_inspector").value.trim();
+    var btn = document.getElementById(msgId + "_savebtn");
+
+    var record = {
+      id: Date.now(),
+      category: cat.label,
+      date: date,
+      inspector: inspector || "-",
+      total: cat.items.length,
+      checkedCount: checkedTexts.length,
+      checkedItems: checkedTexts,
+      savedAt: new Date().toISOString()
+    };
+
+    var list = loadHistory();
+    list.unshift(record);
+    saveHistoryToStorage(list);
+    renderHistory();
+
+    btn.textContent = "저장 완료 ✓";
+    btn.classList.add("saved");
+    btn.disabled = true;
+  }
+
+  function renderHistory() {
+    var list = loadHistory();
+    historyList.innerHTML = "";
+    if (list.length === 0) {
+      var empty = document.createElement("div");
+      empty.className = "history-empty";
+      empty.textContent = "아직 저장된 점검 이력이 없습니다. 챗봇에서 체크리스트를 작성하고 저장해 보세요.";
+      historyList.appendChild(empty);
+      return;
+    }
+    list.forEach(function (record) {
+      var item = document.createElement("div");
+      item.className = "history-item";
+
+      var top = document.createElement("div");
+      top.className = "hi-top";
+      var catSpan = document.createElement("span");
+      catSpan.className = "hi-cat";
+      catSpan.textContent = record.category;
+      var delBtn = document.createElement("button");
+      delBtn.className = "hi-del";
+      delBtn.type = "button";
+      delBtn.textContent = "삭제";
+      delBtn.addEventListener("click", function () {
+        deleteHistory(record.id);
+      });
+      top.appendChild(catSpan);
+      top.appendChild(delBtn);
+      item.appendChild(top);
+
+      var meta = document.createElement("div");
+      meta.className = "hi-meta";
+      meta.textContent = "점검일자: " + record.date + " · 점검자: " + record.inspector;
+      item.appendChild(meta);
+
+      var progress = document.createElement("div");
+      progress.className = "hi-progress";
+      progress.textContent = "완료 " + record.checkedCount + " / " + record.total + " 항목 체크";
+      item.appendChild(progress);
+
+      if (record.checkedItems.length > 0) {
+        var details = document.createElement("details");
+        var summary = document.createElement("summary");
+        summary.textContent = "체크한 항목 보기";
+        var ul = document.createElement("ul");
+        record.checkedItems.forEach(function (t) {
+          var li = document.createElement("li");
+          li.textContent = t;
+          ul.appendChild(li);
+        });
+        details.appendChild(summary);
+        details.appendChild(ul);
+        item.appendChild(details);
+      }
+
+      historyList.appendChild(item);
+    });
+  }
+
+  function deleteHistory(id) {
+    var list = loadHistory().filter(function (r) { return r.id !== id; });
+    saveHistoryToStorage(list);
+    renderHistory();
+  }
+
+  // ---------- 6) 이벤트 바인딩 ----------
+  inputForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var selected = categorySelect.value;
+    var text = questionInput.value.trim();
+
+    if (selected !== "auto") {
+      addUserBubble("[" + CHECKLISTS[selected].label + "] 체크리스트 보여줘" + (text ? " · " + text : ""));
+      addBotChecklist(selected);
+      questionInput.value = "";
+      return;
+    }
+
+    if (!text) return;
+    addUserBubble(text);
+    var key = matchCategory(text);
+    if (key) {
+      addBotChecklist(key);
+    } else {
+      addBotUnknown();
+    }
+    questionInput.value = "";
+  });
+
+  toggleHistoryBtn.addEventListener("click", function () {
+    historyPanel.classList.toggle("open");
+    toggleHistoryBtn.textContent = historyPanel.classList.contains("open") ? "이력 숨기기" : "이력 보기";
+  });
+
+  // ---------- 7) 초기화 ----------
+  addBotGreeting();
+  renderHistory();
+})();
+</script>
+
+</body>
+</html>
